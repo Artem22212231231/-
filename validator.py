@@ -1,43 +1,48 @@
 """
-Модуль валидации ввода.
+Модуль валидации пользовательского ввода.
+Обеспечивает проверку корректности настроек генерации пароля и имени записи.
 """
 
 import re
 
 
-def validate_password_settings(settings: dict) -> list:
+def validate_password_settings(settings):
     """
-    Проверяет корректность настроек генерации пароля.
-    Возвращает список ошибок (пустой, если всё верно).
-    settings — словарь с ключами: length, use_uppercase, use_digits, use_special
+    Проверяет словарь настроек генерации пароля.
+    Возвращает список строк с описаниями ошибок.
+    Если список пуст — данные корректны.
     """
     errors = []
 
-    # Длина
+    # Проверка длины
     length = settings.get('length')
-    if not isinstance(length, int) or not (6 <= length <= 128):
-        errors.append("Длина пароля должна быть целым числом от 6 до 128.")
+    if not isinstance(length, int):
+        errors.append("Длина пароля должна быть целым числом.")
+    elif not (6 <= length <= 128):
+        errors.append("Длина пароля должна быть от 6 до 128 символов.")
 
-    # Булевы флаги
+    # Проверка булевых флагов
     for key in ['use_uppercase', 'use_digits', 'use_special']:
-        if not isinstance(settings.get(key), bool):
-            errors.append(f"Параметр '{key}' должен быть булевым значением (True/False).")
+        value = settings.get(key)
+        if not isinstance(value, bool):
+            errors.append(f"Параметр '{key}' должен принимать значение True или False.")
 
-    # Хотя бы один тип символов
-    if not any([settings.get('use_uppercase', True),
-                settings.get('use_digits', True),
-                settings.get('use_special', True)]):
-        errors.append("Должен быть выбран хотя бы один дополнительный набор символов.")
+    # Хотя бы один дополнительный набор символов
+    if not (settings.get('use_uppercase') or settings.get('use_digits') or settings.get('use_special')):
+        errors.append("Необходимо выбрать хотя бы один дополнительный тип символов (заглавные, цифры или спецсимволы).")
 
     return errors
 
 
-def validate_password_name(name: str) -> str | None:
-    """Проверяет имя пароля. Возвращает сообщение об ошибке или None."""
+def validate_password_name(name):
+    """
+    Проверяет имя (название) сохраняемого пароля.
+    Возвращает None, если имя корректно, иначе строку с ошибкой.
+    """
     if not name or not name.strip():
         return "Имя пароля не может быть пустым."
     if len(name.strip()) > 50:
-        return "Имя пароля должно быть не длиннее 50 символов."
+        return "Имя пароля не должно превышать 50 символов."
     if not re.match(r'^[A-Za-zА-Яа-я0-9 _-]+$', name.strip()):
         return "Имя может содержать только буквы, цифры, пробелы, дефисы и подчёркивания."
     return None
